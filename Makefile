@@ -1,4 +1,4 @@
-# Makefile for building and cleaning the Go project
+# Makefile for building, cleaning, and running the Go project
 
 # Build the project
 dist:
@@ -10,3 +10,8 @@ dist:
 clean:
 	@echo "Cleaning build artifacts..."
 	@rm -rf dist
+
+# Run the game for local development and debugging
+run:
+	@echo "Running the game..."
+	@go run cmd/main.go
