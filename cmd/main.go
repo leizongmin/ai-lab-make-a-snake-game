@@ -16,8 +16,8 @@ var (
 	gamePaused    = false
 	gameExited    = false
 	score         = 0
-	screenWidth   = 30
-	screenHeight  = 20
+	screenWidth   = 0
+	screenHeight  = 0
 )
 
 func clearScreen() {
@@ -100,7 +100,7 @@ func updateGame() {
 	snakePosition = append([][2]int{head}, snakePosition[:len(snakePosition)-1]...)
 
 	// Check for game over conditions
-	if head[0] < 0 || head[0] >= screenHeight || head[1] < 0 || head[1] >= screenWidth {
+	if head[0] < 2 || head[0] >= screenHeight-2 || head[1] < 0 || head[1] >= screenWidth {
 		gameOver = true
 	}
 
@@ -110,7 +110,7 @@ func updateGame() {
 		snakePosition = append(snakePosition, foodPosition)
 		// Generate new food position
 		for {
-			newFoodPosition := [2]int{rand.Intn(screenHeight), rand.Intn(screenWidth)}
+			newFoodPosition := [2]int{rand.Intn(screenHeight-4) + 2, rand.Intn(screenWidth)}
 			if !contains(snakePosition, newFoodPosition) {
 				foodPosition = newFoodPosition
 				break
@@ -131,6 +131,15 @@ func contains(slice [][2]int, item [2]int) bool {
 func drawScreen() {
 	clearScreen()
 
+	// Set background color for top and bottom rows and the rest of the screen
+	for i := 0; i < screenWidth; i++ {
+		termbox.SetCell(i, 0, ' ', termbox.ColorBlack, termbox.ColorWhite)
+		termbox.SetCell(i, screenHeight-1, ' ', termbox.ColorBlack, termbox.ColorWhite)
+		for j := 1; j < screenHeight-1; j++ {
+			termbox.SetCell(i, j, ' ', termbox.ColorDefault, termbox.ColorBlue)
+		}
+	}
+
 	if gameOver {
 		msg := "Game Over"
 		x := (screenWidth - len(msg)) / 2
@@ -144,7 +153,7 @@ func drawScreen() {
 	}
 
 	if gamePaused {
-		msg := "Pause"
+		msg := "Paused"
 		x := (screenWidth - len(msg)) / 2
 		y := screenHeight / 2
 		for _, c := range msg {
@@ -154,14 +163,22 @@ func drawScreen() {
 	}
 
 	for _, pos := range snakePosition {
-		termbox.SetCell(pos[1], pos[0], '●', termbox.ColorGreen, termbox.ColorDefault)
+		termbox.SetCell(pos[1], pos[0], '●', termbox.ColorGreen, termbox.ColorBlue)
 	}
-	termbox.SetCell(foodPosition[1], foodPosition[0], '●', termbox.ColorRed, termbox.ColorDefault)
+	termbox.SetCell(foodPosition[1], foodPosition[0], '●', termbox.ColorRed, termbox.ColorBlue)
 
 	// Display score
 	scoreMsg := fmt.Sprintf("Score: %d", score)
 	for i, c := range scoreMsg {
 		termbox.SetCell(i, screenHeight-1, c, termbox.ColorBlack, termbox.ColorWhite)
+	}
+
+	// Display control instructions
+	controlMsg := "Use ASDW or arrow keys to move, Space to pause/start, X to exit."
+	for i, c := range controlMsg {
+		if i < screenWidth {
+			termbox.SetCell(i, 0, c, termbox.ColorBlack, termbox.ColorWhite)
+		}
 	}
 
 	termbox.Flush()
@@ -174,9 +191,9 @@ func main() {
 	}
 	defer termbox.Close()
 
+	screenWidth, screenHeight = termbox.Size()
+
 	hideCursor()
-	fmt.Println("Welcome to the Snake Game!")
-	fmt.Println("Use ASDW or arrow keys to move, Space to pause/start.")
 
 	go processInput()
 
