@@ -80,6 +80,15 @@ func handleKey(char rune, key termbox.Key) {
 	}
 }
 
+func calculateSleepDuration(length int) time.Duration {
+	// Ensure the sleep duration decreases as the snake's length increases, but set a minimum limit to prevent the game from becoming unplayable.
+	speed := 400 - length*20
+	if speed < 100 {
+		speed = 100
+	}
+	return time.Duration(speed) * time.Millisecond
+}
+
 func updateGame() {
 	if gamePaused || gameOver {
 		return
@@ -200,6 +209,6 @@ func main() {
 	for !gameExited {
 		updateGame()
 		drawScreen()
-		time.Sleep(time.Millisecond * 500) // Adjusted sleep duration for improved responsiveness and consistent snake movement speed
+		time.Sleep(calculateSleepDuration(len(snakePosition))) // Use dynamic sleep duration based on snake's length
 	}
 }
