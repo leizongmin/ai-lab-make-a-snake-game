@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/eiannone/keyboard"
 	"github.com/nsf/termbox-go"
 )
 
@@ -15,6 +14,7 @@ var (
 	direction     = 'R'
 	gameOver      = false
 	gamePaused    = false
+	gameExited    = false
 	score         = 0
 	screenWidth   = 30
 	screenHeight  = 20
@@ -29,57 +29,53 @@ func hideCursor() {
 	termbox.HideCursor()
 }
 
-func readInput() {
-	if err := keyboard.Open(); err != nil {
-		panic(err)
+func processInput() {
+	for !gameExited {
+		switch ev := termbox.PollEvent(); ev.Type {
+		case termbox.EventKey:
+			handleKey(ev.Ch, ev.Key)
+		}
 	}
-	defer func() {
-		_ = keyboard.Close()
-	}()
+}
 
-	for {
-		char, key, err := keyboard.GetKey()
-		if err != nil {
-			panic(err)
+func handleKey(char rune, key termbox.Key) {
+	if char == 'x' || char == 'X' {
+		gameExited = true
+		return
+	}
+
+	if key == termbox.KeySpace {
+		gamePaused = !gamePaused
+		if gameOver {
+			gameOver = false
+			snakePosition = [][2]int{{5, 5}}
+			foodPosition = [2]int{10, 10}
+			direction = 'R'
+			score = 0
 		}
+		return
+	}
 
-		if !gamePaused && !gameOver {
-			switch char {
-			case 'a', 'A':
-				direction = 'L'
-			case 'd', 'D':
-				direction = 'R'
-			case 'w', 'W':
-				direction = 'U'
-			case 's', 'S':
-				direction = 'D'
-			}
-
-			switch key {
-			case keyboard.KeyArrowLeft:
-				direction = 'L'
-			case keyboard.KeyArrowRight:
-				direction = 'R'
-			case keyboard.KeyArrowUp:
-				direction = 'U'
-			case keyboard.KeyArrowDown:
-				direction = 'D'
-			}
+	if !gamePaused && !gameOver {
+		switch char {
+		case 'a', 'A':
+			direction = 'L'
+		case 'd', 'D':
+			direction = 'R'
+		case 'w', 'W':
+			direction = 'U'
+		case 's', 'S':
+			direction = 'D'
 		}
-
-		if key == keyboard.KeySpace {
-			gamePaused = !gamePaused
-			if gameOver {
-				gameOver = false
-				snakePosition = [][2]int{{5, 5}}
-				foodPosition = [2]int{10, 10}
-				direction = 'R'
-				score = 0
-			}
-		}
-
-		if key == keyboard.KeyEsc {
-			break
+		switch key {
+		case termbox.KeyArrowLeft:
+			direction = 'L'
+		case termbox.KeyArrowRight:
+			direction = 'R'
+		case termbox.KeyArrowUp:
+			direction = 'U'
+		case termbox.KeyArrowDown:
+			direction = 'D'
 		}
 	}
 }
@@ -182,11 +178,11 @@ func main() {
 	fmt.Println("Welcome to the Snake Game!")
 	fmt.Println("Use ASDW or arrow keys to move, Space to pause/start.")
 
-	go readInput()
+	go processInput()
 
-	for {
+	for !gameExited {
 		updateGame()
 		drawScreen()
-		time.Sleep(time.Second / 2)
+		time.Sleep(time.Millisecond * 500) // Adjusted sleep duration for improved responsiveness and consistent snake movement speed
 	}
 }
