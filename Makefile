@@ -1,4 +1,4 @@
-# Makefile for building, cleaning, and running the Go project
+# Makefile for building, cleaning, running the Go project, and executing unit tests
 
 # Build the project
 dist:
@@ -15,3 +15,8 @@ clean:
 run:
 	@echo "Running the game..."
 	@go run cmd/main.go
+
+# Execute unit tests
+test:
+	@echo "Executing unit tests..."
+	@go test ./...
